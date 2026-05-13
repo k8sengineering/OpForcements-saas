@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opforcements-apex
+  labels:
+    app.kubernetes.io/part-of: opforcements
+    opforcements/tenant: apex

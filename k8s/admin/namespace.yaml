@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opforcements-admin
+  labels:
+    app.kubernetes.io/part-of: opforcements
+    opforcements/tenant: admin

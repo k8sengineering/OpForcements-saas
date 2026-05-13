@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: opforcements-admin
+data:
+  TENANT_ID: "admin"
+  TENANT_NAME: "OpForcements Admin"
