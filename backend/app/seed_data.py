@@ -457,6 +457,14 @@ def _seed_tenant(db: Session, module):
             ebx_slots=conf["ebx_slots"], description=conf["description"],
         ))
     db.commit()
+    for a in getattr(module, "ATTENDEES", []):
+        db.add(ConferenceAttendee(
+            conference_id=a["conf_id"], user_id=a["user_id"], role=a["role"],
+            hotel_name=a["hotel"], hotel_address=a["hotel_addr"],
+            check_in=a["check_in"], check_out=a["check_out"],
+            flight_in=a["flight_in"], flight_out=a["flight_out"],
+        ))
+    db.commit()
 
 
 def _seed_legacy(db: Session):

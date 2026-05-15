@@ -18,10 +18,10 @@ $ErrorActionPreference = 'Stop'
 $ROOT = $PSScriptRoot
 
 $TENANTS = @(
-    @{ Name='novatech'; Namespace='opforcements-novatech'; FrontPort=3001; BackPort=8001 },
-    @{ Name='meridian'; Namespace='opforcements-meridian'; FrontPort=3002; BackPort=8002 },
-    @{ Name='apex';     Namespace='opforcements-apex';     FrontPort=3003; BackPort=8003 },
-    @{ Name='admin';    Namespace='opforcements-admin';    FrontPort=3000; BackPort=8000 }
+    @{ Name='novatech'; Namespace='opforcements-novatech'; Host='novatech.opforcements.local' },
+    @{ Name='meridian'; Namespace='opforcements-meridian'; Host='meridian.opforcements.local' },
+    @{ Name='apex';     Namespace='opforcements-apex';     Host='apex.opforcements.local'     },
+    @{ Name='admin';    Namespace='opforcements-admin';    Host='admin.opforcements.local'    }
 )
 
 function Log($msg) { Write-Host ('  ' + $msg) -ForegroundColor Cyan }
@@ -47,6 +47,11 @@ if ($status -ne 'Running') {
 } else {
     Ok 'minikube already running'
 }
+
+# Enable ingress addon (nginx ingress controller)
+Hdr 'Enabling ingress addon'
+minikube addons enable ingress
+Ok 'Ingress addon ready'
 
 # Configure Docker
 Hdr 'Configuring Docker environment'
@@ -78,6 +83,7 @@ foreach ($t in $TENANTS) {
     kubectl apply -f "$dir\postgres\"
     kubectl apply -f "$dir\backend\"
     kubectl apply -f "$dir\frontend\"
+    kubectl apply -f "$dir\ingress.yaml"
     Ok ($t.Name + ' manifests applied')
 }
 
@@ -91,14 +97,24 @@ foreach ($t in $TENANTS) {
     Ok ($t.Name + ' ready')
 }
 
+# Get minikube IP for hosts file
+$MINIKUBE_IP = minikube ip
+$HOSTS_LINE = $MINIKUBE_IP
+foreach ($t in $TENANTS) { $HOSTS_LINE = $HOSTS_LINE + '  ' + $t.Host }
+
 # Summary
 Write-Host ''
 Write-Host '================================================================' -ForegroundColor Green
-Write-Host '  All OpForcements tenants are running!' -ForegroundColor Green
+Write-Host '  All OpForcements tenants deployed!' -ForegroundColor Green
 Write-Host '================================================================' -ForegroundColor Green
 Write-Host ''
-Write-Host '  Tenant         Frontend            Backend             Login'
-Write-Host '  -----------------------------------------------------------------------'
+Write-Host '  STEP 1 - Add this line to C:\Windows\System32\drivers\etc\hosts'
+Write-Host '  (open Notepad as Administrator to edit):' -ForegroundColor Yellow
+Write-Host ''
+Write-Host ('  ' + $HOSTS_LINE) -ForegroundColor White
+Write-Host ''
+Write-Host '  STEP 2 - Open your browser:' -ForegroundColor Yellow
+Write-Host ''
 foreach ($t in $TENANTS) {
     $login = switch ($t.Name) {
         'novatech' { 'admin@novatech.io / NovaTech123!' }
@@ -106,19 +122,8 @@ foreach ($t in $TENANTS) {
         'apex'     { 'admin@apexhealth.tech / Apex123!' }
         'admin'    { 'admin@opforcements.io / Admin2024!' }
     }
-    $line = '  {0,-14} http://localhost:{1,-5} http://localhost:{2,-5} {3}' -f $t.Name, $t.FrontPort, $t.BackPort, $login
-    Write-Host $line
+    Write-Host ('  http://' + $t.Host + '   ->  ' + $login)
 }
 Write-Host ''
-Write-Host '  To port-forward a single tenant:'
-Write-Host '    .\deploy-tenant.ps1 -Tenant novatech -PortForward'
-Write-Host ''
-Write-Host '  To port-forward all (run each in a separate terminal):'
-foreach ($t in $TENANTS) {
-    $ns = $t.Namespace
-    $fp = $t.FrontPort
-    $bp = $t.BackPort
-    Write-Host ('    kubectl port-forward svc/frontend ' + $fp + ':80   -n ' + $ns)
-    Write-Host ('    kubectl port-forward svc/backend  ' + $bp + ':8000 -n ' + $ns)
-}
+Write-Host '  No port-forwarding needed!' -ForegroundColor Green
 Write-Host ''
