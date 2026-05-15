@@ -68,10 +68,10 @@ if ($status -ne "Running") {
     Ok "minikube already running"
 }
 
-# ── Configure Docker to use minikube's daemon ────────────────────────────────
+# ── Configure Docker to use minikube daemon ──────────────────────────────────
 Hdr "Configuring Docker environment"
 & minikube -p minikube docker-env --shell powershell | Invoke-Expression
-Ok "Using minikube's Docker daemon"
+Ok "Using minikube Docker daemon"
 
 # ── Build images ──────────────────────────────────────────────────────────────
 Hdr "Building backend image"
